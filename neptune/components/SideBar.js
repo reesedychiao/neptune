@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import FileSystemDisplay from "./FileSystemDisplay";
 import { Button } from "@/components/ui/button";
 import { Input } from "./ui/input";
@@ -56,37 +56,43 @@ const SideBar = () => {
 
   return (
     <div>
-      <div className="ml-40 mt-4">
-        <Button onClick={() => setShowFolderForm(true)} className="mr-4">
-          +
-        </Button>
-        {showFolderForm && (
-          <form onSubmit={handleAddFolder}>
-            <Input
-              placeholder="Enter folder name"
-              value={folderName}
-              onChange={(e) => setFolder(e.target.value)}
-              className="w-48"
-            ></Input>
-          </form>
-        )}
-        <Button onClick={() => setShowFileForm(true)}>+</Button>
-        {showFileForm && (
-          <form onSubmit={handleAddFile}>
-            <Input
-              placeholder="Enter file name"
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-              className="w-48"
-            ></Input>
-          </form>
-        )}
+      <div>
+        <div className="ml-40 mt-4">
+          <Button onClick={() => setShowFolderForm(true)} className="mr-4">
+            📁
+          </Button>
+          <Button onClick={() => setShowFileForm(true)}>📄</Button>
+        </div>
+        <div className="ml-20 mt-4">
+          {showFolderForm && (
+            <form onSubmit={handleAddFolder}>
+              <Input
+                placeholder="Enter folder name"
+                value={folder}
+                onChange={(e) => setFolder(e.target.value)}
+                className="w-48 text-white"
+              ></Input>
+            </form>
+          )}
+          {showFileForm && (
+            <form onSubmit={handleAddFile}>
+              <Input
+                placeholder="Enter file name"
+                value={file}
+                onChange={(e) => setFileName(e.target.value)}
+                className="w-48 text-white"
+              ></Input>
+            </form>
+          )}
+        </div>
       </div>
       <FileSystemDisplay />
       <Button
         onClick={handleDisplayGraph}
         className="absolute bottom-8 left-16"
-      ></Button>
+      >
+        🪐
+      </Button>
     </div>
   );
 };
