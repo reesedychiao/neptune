@@ -108,37 +108,13 @@ class NoteGraphModel:
 
         # Join all text to process with KeyBERT
         full_text = " ".join([line for _, line in index_to_text])
-        
+
         # 1. Extract keywords using KeyBERT
         extracted_keywords = self.kw_model.extract_keywords(full_text, top_n=10, keyphrase_ngram_range=(1, 2))
         for word, score in extracted_keywords:
             # Map back to the sentence index
             sentence_idx = self._find_sentence_index(word, text)
             keywords.append({"value": word, "index": sentence_idx, "score": score})
-        
-        # 2. Extract topics (optional GPT chunking)
-        topic_chunks = self._chunk_text_with_gpt(full_text)
-
-        for chunk in topic_chunks:
-            topic_title = chunk["topic"]
-            topic_summary = chunk["summary"]
-            topic_idx = self._find_sentence_index(topic_title, text)
-            topics.append({"value": topic_title, "index": topic_idx, "summary": topic_summary})
-            
-            # Add to the graph
-            self.graph.add_node(topic_title, type="topic", note_id=note_id, summary=topic_summary)
-            for keyword in keywords:
-                # Add edges between topics and keywords
-                self.graph.add_edge(topic_title, keyword["value"], relation="related")
-
-        # 3. Store the results into the graph (optional relationships)
-        for word in keywords:
-            self.graph.add_node(word["value"], type="keyword", note_id=note_id)
-            # Optional: Add relationships between keywords
-            self.graph.add_edge(word["value"], note_id, relation="from_note")
-
-        return {"keywords": keywords, "topics": topics}
-
         pass
 
     def _parse_note_md(self, text, note_id):
@@ -190,6 +166,12 @@ class NoteGraphModel:
             "keywords": keywords,
             "topics": topics
         }
+    
+    def _combine_nodes(self):
+        pass
+
+    def _find_edges(self):
+        pass
 
 
     def query(self, **filters):
