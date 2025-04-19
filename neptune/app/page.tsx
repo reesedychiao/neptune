@@ -4,7 +4,7 @@ import type React from "react";
 import { useState } from "react";
 import FileSystemDisplay from "@/components/FileSystemDisplay";
 import NotesDisplay from "@/components/NotesDisplay";
-import GraphDisplay from "@/components/GraphDisplay";
+import KnowledgeGraph from "@/components/KnowledgeGraph";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Folder, File, EarthIcon as PlanetIcon } from "lucide-react";
@@ -233,7 +233,7 @@ const Home = () => {
 
         {showGraph && (
           <div className="flex-1 bg-white">
-            <GraphDisplay />
+            <KnowledgeGraph />
           </div>
         )}
       </div>
