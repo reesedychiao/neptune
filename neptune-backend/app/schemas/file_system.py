@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict
+from datetime import datetime
 
 class FileSystemItem(BaseModel):
     id: int
@@ -23,3 +24,13 @@ class FileSystemResponse(BaseModel):
 
 class FileSystemListResponse(BaseModel):
     items: List[FileSystemItem]
+
+# Add the missing folder-specific schemas
+class FolderCreate(BaseModel):
+    name: str
+    parent_id: Optional[int] = None
+
+class FolderResponse(BaseModel):
+    id: int
+    name: str
+    parent_id: Optional[int] = None

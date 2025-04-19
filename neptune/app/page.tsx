@@ -13,6 +13,8 @@ const Home = () => {
   const [folder, setFolder] = useState("");
   const [file, setFile] = useState("");
   const [showGraph, setShowGraph] = useState(false);
+  const [showNotes, setShowNotes] = useState(true);
+  const [parent, setParent] = useState("");
 
   const handleAddFolder = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
@@ -20,7 +22,7 @@ const Home = () => {
       const res = await fetch("http://localhost:8000/api/folders/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: folder }),
+        body: JSON.stringify({ name: folder, type: "folder", parent: parent }),
       });
 
       if (!res.ok) throw new Error("Failed to create folder");
@@ -31,16 +33,17 @@ const Home = () => {
     }
     setFolder("");
     setShowFolderForm(false);
+    setParent("");
   };
 
   const handleAddFile = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     setShowGraph(false);
     try {
-      const res = await fetch("/api/folders/", {
+      const res = await fetch("http://localhost:8000/api/folders/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file }),
+        body: JSON.stringify({ name: file, type: "file", parent: parent }),
       });
 
       if (!res.ok) throw new Error("Failed to create file");
@@ -51,24 +54,32 @@ const Home = () => {
     }
     setFile("");
     setShowFileForm(false);
+    setParent("");
   };
 
   const handleDisplayGraph = (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    setShowGraph(true);
+    setShowGraph(!showGraph);
+    setShowNotes(!showNotes);
+    setParent("");
   };
 
   return (
     <div className="flex">
       <div>
         <div>
-          <div className="ml-40 mt-8">
-            <Button onClick={() => setShowFolderForm(true)} className="mr-4">
+          <div className="ml-40 mt-8 flex">
+            <Button
+              onClick={() => setShowFolderForm(true)}
+              className="mr-4 text-xl"
+            >
               📁
             </Button>
-            <Button onClick={() => setShowFileForm(true)}>📄</Button>
+            <Button onClick={() => setShowFileForm(true)} className="text-xl">
+              📄
+            </Button>
           </div>
-          <div className="ml-20 mt-4">
+          <div className="ml-8 my-4">
             {showFolderForm && (
               <form onSubmit={handleAddFolder}>
                 <Input
@@ -91,18 +102,20 @@ const Home = () => {
             )}
           </div>
         </div>
-        <FileSystemDisplay />
+        <FileSystemDisplay
+          onClick={(e: React.SetStateAction<string>) => setParent(e)}
+        />
         <Button
           onClick={handleDisplayGraph}
-          className="absolute bottom-8 left-16"
+          className="absolute bottom-8 left-16 text-xl"
         >
           🪐
         </Button>
       </div>
-      <div>
-        <NotesDisplay selectedFile={folder || file} />
+      <div>{showNotes && <NotesDisplay selectedFile={folder || file} />}</div>
+      <div className="bg-white w-[600px] h-[600px] ml-8">
+        {showGraph && <GraphDisplay />}
       </div>
-      <div>{showGraph && <GraphDisplay />}</div>
     </div>
   );
 };
