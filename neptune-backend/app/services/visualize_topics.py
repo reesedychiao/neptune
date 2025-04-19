@@ -5,7 +5,7 @@ from openai import OpenAI
 import os
 import itertools
 from dotenv import load_dotenv
-from llm_service import extract_topics_from_notes
+from .llm_service import extract_topics_from_notes
 from typing import List, Dict, Any, Tuple
 
 # Load environment variables
