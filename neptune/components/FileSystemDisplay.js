@@ -7,7 +7,7 @@ const FileSystemDisplay = () => {
   useEffect(() => {
     const fetchFileSystem = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/filesystem/");
+        const res = await fetch("/api/filesystem/");
         if (!res.ok) throw new Error("Failed to fetch file system");
         const data = await res.json();
         setFileSystem(data);
@@ -20,8 +20,8 @@ const FileSystemDisplay = () => {
     };
   }, []);
 
-  if (loading) return <p>Loading...</p>;
-  if (!fileSystem.length) return <p>No files or folders...</p>;
+  if (loading) return <p className="ml-8">Loading...</p>;
+  if (!fileSystem.length) return <p className="ml-4">No files or folders...</p>;
 
   return (
     <div>

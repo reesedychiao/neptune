@@ -1,12 +1,110 @@
-import SideBar from "../components/SideBar";
+"use client";
 
-export default function Home() {
+import React, { useState } from "react";
+import FileSystemDisplay from "../components/FileSystemDisplay";
+import NotesDisplay from "../components/NotesDisplay";
+import GraphDisplay from "../components/GraphDisplay";
+import { Button } from "@/components/ui/button";
+import { Input } from "../components/ui/input";
+
+const Home = () => {
+  const [showFolderForm, setShowFolderForm] = useState(false);
+  const [showFileForm, setShowFileForm] = useState(false);
+  const [folder, setFolder] = useState("");
+  const [file, setFile] = useState("");
+  const [showGraph, setShowGraph] = useState(false);
+
+  const handleAddFolder = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("http://localhost:8000/api/folders/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: folder }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create folder");
+
+      console.log("Folder added:", folder);
+    } catch (err) {
+      console.error(err);
+    }
+    setFolder("");
+    setShowFolderForm(false);
+  };
+
+  const handleAddFile = async (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    setShowGraph(false);
+    try {
+      const res = await fetch("/api/folders/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: file }),
+      });
+
+      if (!res.ok) throw new Error("Failed to create file");
+
+      console.log("File added:", file);
+    } catch (err) {
+      console.log(err);
+    }
+    setFile("");
+    setShowFileForm(false);
+  };
+
+  const handleDisplayGraph = (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    setShowGraph(true);
+  };
+
   return (
-    <div>
+    <div className="flex">
       <div>
-        <SideBar />
+        <div>
+          <div className="ml-40 mt-8">
+            <Button onClick={() => setShowFolderForm(true)} className="mr-4">
+              📁
+            </Button>
+            <Button onClick={() => setShowFileForm(true)}>📄</Button>
+          </div>
+          <div className="ml-20 mt-4">
+            {showFolderForm && (
+              <form onSubmit={handleAddFolder}>
+                <Input
+                  placeholder="Enter folder name"
+                  value={folder}
+                  onChange={(e) => setFolder(e.target.value)}
+                  className="w-48 text-white"
+                ></Input>
+              </form>
+            )}
+            {showFileForm && (
+              <form onSubmit={handleAddFile}>
+                <Input
+                  placeholder="Enter file name"
+                  value={file}
+                  onChange={(e) => setFile(e.target.value)}
+                  className="w-48 text-white"
+                ></Input>
+              </form>
+            )}
+          </div>
+        </div>
+        <FileSystemDisplay />
+        <Button
+          onClick={handleDisplayGraph}
+          className="absolute bottom-8 left-16"
+        >
+          🪐
+        </Button>
       </div>
-      <div></div>
+      <div>
+        <NotesDisplay selectedFile={folder || file} />
+      </div>
+      <div>{showGraph && <GraphDisplay />}</div>
     </div>
   );
-}
+};
+
+export default Home;

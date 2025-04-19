@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const NotesDisplay = ({ selectedFile }) => {
   const [note, setNote] = useState("");
   const [status, setStatus] = useState("Saved");
-  const saveTimeoutRef = (useRef < NodeJS.Timeout) | (null > null);
+  const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!selectedFile) {
@@ -15,7 +15,7 @@ const NotesDisplay = ({ selectedFile }) => {
     }
     const fetchNote = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/notes/");
+        const res = await fetch("/api/notes/");
         if (!res.ok) throw new Error("Failed to fetch note");
         const data = await res.json();
         setNote(data.note);
@@ -38,7 +38,7 @@ const NotesDisplay = ({ selectedFile }) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/notes/", {
+        const res = await fetch("/api/notes/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ note: newNote }),
@@ -55,7 +55,7 @@ const NotesDisplay = ({ selectedFile }) => {
   };
 
   return (
-    <div className="ml-4 mr-40 mt-4 flex flex-col">
+    <div className="ml-8 mr-40 mt-8 flex flex-col">
       <label htmlFor="markdown-note" className="mb-2 font-semibold">
         Notes ({selectedFile || "No file selected"})
       </label>
@@ -69,10 +69,8 @@ const NotesDisplay = ({ selectedFile }) => {
             : "Select a file to begin typing..."
         }
         disabled={!selectedFile}
-        className={`w-full h-96 p-4 border rounded-lg shadow-sm resize-none ${
-          selectedFile
-            ? "border-gray-300 focus:outline-none focus:ring focus:border-blue-300"
-            : "bg-gray-100 border-gray-200 cursor-not-allowed"
+        className={`w-5xl h-screen p-4 rounded-lg shadow-sm resize-none bg-black text-white ${
+          selectedFile ? "" : "cursor-not-allowed"
         }`}
       />
       <span className="text-sm mt-2 text-gray-500">{status}</span>
