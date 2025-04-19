@@ -300,16 +300,49 @@ def visualize_topic_relationships(topics_data, filename_base="topic_relationship
     visualize_graph_matplotlib(G, filename=f"{filename_base}.png")
     
     return G
+
+def graph_to_frontend_format(G: nx.Graph) -> Dict:
+    """
+    Convert NetworkX graph to a frontend-friendly JSON structure
+    
+    Args:
+        G: NetworkX graph of topics and relationships
+        
+    Returns:
+        Dictionary with nodes and links arrays for frontend visualization
+    """
+    nodes = []
+    for node, data in G.nodes(data=True):
+        nodes.append({
+            "id": node,
+            "label": node,
+            "size": data.get("size", 30),
+            "noteCount": data.get("note_count", 0),
+            "noteIds": data.get("note_ids", [])
+        })
+    
+    links = []
+    for u, v, data in G.edges(data=True):
+        links.append({
+            "source": u,
+            "target": v,
+            "strength": data.get("weight", 0.5)
+        })
+    
+    return {
+        "nodes": nodes,
+        "links": links
+    }
     
 # Run this to generate the visualizations
-if __name__ == "__main__":
-    from test_llm import test_notes, topics
+# if __name__ == "__main__":
+#     from test_llm import test_notes, topics
     
-    # If topics weren't extracted yet, do it now
-    if not topics:
-        topics = extract_topics_from_notes(test_notes)
-        print(f"Extracted topics: {topics}")
+#     # If topics weren't extracted yet, do it now
+#     if not topics:
+#         topics = extract_topics_from_notes(test_notes)
+#         print(f"Extracted topics: {topics}")
     
-    # Create and visualize the topic graph
-    print("\nCreating knowledge graph with just topics and their relationships...")
-    G_topics = visualize_topic_relationships(topics)
+#     # Create and visualize the topic graph
+#     print("\nCreating knowledge graph with just topics and their relationships...")
+#     G_topics = visualize_topic_relationships(topics)
