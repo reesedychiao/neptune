@@ -119,54 +119,54 @@ class NoteGraphModel:
 
     def _parse_note_md(self, text, note_id):
         """
-        Input: dictionary {index: markdown_sentence}
+        Input: raw markdown text
         Output:
-        - keywords: list of {"value": word, "index": idx}
-        - topics: list of {"value": heading, "index": idx}
+        - keywords: list of {"value": word, "note_id": note_id}
+        - topics: list of {"value": heading, "note_id": note_id}
         """
-        index_to_text = list(text.items())
         keywords = []
         topics = []
 
-        for idx, line in index_to_text:
-            # Check for topic (markdown heading)
-            if re.match(r'^#{1,6} ', line):
-                topics.append({"value": line.strip(), "index": idx})
+        # Extract headings
+        heading_matches = re.findall(r'^(#{1,6})\s+(.*)', text, re.MULTILINE)
+        for _, heading in heading_matches:
+            topics.append({"value": heading.strip(), "note_id": note_id})
 
-            # Extract bold-italic keywords
-            bold_italic_matches = re.findall(r'\*\*\*(.+?)\*\*\*|___(.+?)___', line)
-            for match in bold_italic_matches:
-                for word in match:
-                    if word:
-                        keywords.append({"value": word.strip(), "index": idx})
+        # Extract bold-italic (***text*** or ___text___)
+        bold_italic_matches = re.findall(r'\*\*\*(.+?)\*\*\*|___(.+?)___', text)
+        for match in bold_italic_matches:
+            for word in match:
+                if word:
+                    keywords.append({"value": word.strip(), "note_id": note_id})
 
-            # Extract bold-only keywords
-            bold_matches = re.findall(r'\*\*(.+?)\*\*|__(.+?)__', line)
-            for match in bold_matches:
-                for word in match:
-                    if word:
-                        keywords.append({"value": word.strip(), "index": idx})
+        # Extract bold (**text** or __text__)
+        bold_matches = re.findall(r'\*\*(.+?)\*\*|__(.+?)__', text)
+        for match in bold_matches:
+            for word in match:
+                if word:
+                    keywords.append({"value": word.strip(), "note_id": note_id})
 
-            # Extract italic-only keywords
-            italic_matches = re.findall(
-                r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)',
-                line
-            )
-            for match in italic_matches:
-                for word in match:
-                    if word:
-                        keywords.append({"value": word.strip(), "index": idx})
+        # Extract italic (*text* or _text_)
+        italic_matches = re.findall(
+            r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)',
+            text
+        )
+        for match in italic_matches:
+            for word in match:
+                if word:
+                    keywords.append({"value": word.strip(), "note_id": note_id})
 
-            # Extracts defined vocabulary terms
-            vocab = re.findall(r"\*\*(.*?)\*\*\s*[:\-–=]\s*(.+)", line)
-            for term in vocab:
-                keywords.append({
-                    keywords.append({"value": word.strip(), "index": idx})})
+        # Extract vocab terms (**term** - definition) → just get term
+        vocab_matches = re.findall(r'\*\*(.*?)\*\*\s*[:\-–=]\s*.+', text)
+        for term in vocab_matches:
+            if term:
+                keywords.append({"value": term.strip(), "note_id": note_id})
+
         return {
             "keywords": keywords,
             "topics": topics
         }
-    
+        
     def _combine_nodes(self):
         pass
 
