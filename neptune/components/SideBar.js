@@ -79,7 +79,7 @@ const SideBar = () => {
               <Input
                 placeholder="Enter file name"
                 value={file}
-                onChange={(e) => setFileName(e.target.value)}
+                onChange={(e) => setFile(e.target.value)}
                 className="w-48 text-white"
               ></Input>
             </form>
