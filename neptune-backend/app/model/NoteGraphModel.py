@@ -173,6 +173,27 @@ class NoteGraphModel:
     def _find_edges(self):
         pass
 
+    def add_topic_from_note(self, topic, note_id):
+        """
+        Adds a topic to the graph or updates an existing topic node with a new note reference.
+        
+        Args:
+            topic (str): The topic text
+            note_id (str): ID of the note containing this topic
+        """
+        # Check if topic already exists
+        if topic in self.graph.nodes:
+            # Get existing note_ids
+            note_ids = self.graph.nodes[topic].get('note_ids', [])
+            if note_id not in note_ids:
+                note_ids.append(note_id)
+                
+            # Update node with new note_ids
+            self.graph.nodes[topic]['note_ids'] = note_ids
+            self.graph.nodes[topic]['count'] = len(note_ids)
+        else:
+            # Create new topic node
+            self._add_node(topic, type="topic", note_ids=[note_id], count=1)
 
     def query(self, **filters):
         """
@@ -228,8 +249,7 @@ class NoteGraphModel:
         plt.title("Test Graph")
         plt.axis('off')
         plt.show()
-        
 
 
 
-        
+
