@@ -1,83 +1,196 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
+import { Loader2, Folder, Save, Check, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SelectedItem } from "@/app/page";
 
-const NotesDisplay = ({ selectedFile }) => {
-  const [note, setNote] = useState("");
-  const [status, setStatus] = useState("Saved");
-  const saveTimeoutRef = useRef(null);
+const NotesDisplay = ({ selectedItem }) => {
+  const [note, setNote] = useState(null);
+  const [content, setContent] = useState("");
+  const [originalContent, setOriginalContent] = useState("");
+  const [status, setStatus] = useState("idle");
+  const [loading, setLoading] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    if (!selectedFile.id) {
-      setNote("");
-      setStatus("No File Selected");
+    if (!selectedItem) {
+      setNote(null);
+      setContent("");
+      setOriginalContent("");
+      setStatus("idle");
+      setHasChanges(false);
+      return;
+    }
+
+    if (selectedItem.type === "folder") {
+      setNote(null);
+      setContent("");
+      setOriginalContent("");
+      setStatus("idle");
+      setHasChanges(false);
       return;
     }
 
     const fetchNote = async () => {
       try {
-        const res = await fetch(`http://localhost:8000/api/${selectedFile}`);
-        if (!res.ok) throw new Error("Failed to fetch note");
+        setLoading(true);
+        setStatus("loading");
+
+        const res = await fetch(
+          `http://localhost:8000/api/filesystem/${selectedItem.id}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch note: ${res.status}`);
+        }
+
         const data = await res.json();
-        setNote(data.content || "");
-        setStatus("Loaded");
+        setNote(data);
+        setContent(data.content || "");
+        setOriginalContent(data.content || "");
+        setStatus("idle");
+        setHasChanges(false);
       } catch (err) {
-        console.log("Error loading note:", err);
-        setStatus("Error loading");
+        console.error("Error loading note:", err);
+        setStatus("error");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchNote();
-  }, [selectedFile]);
+  }, [selectedItem]);
 
   const handleNoteChange = (e) => {
-    const newNote = e.target.value;
-    setNote(newNote);
-    setStatus("Saving...");
+    const newContent = e.target.value;
+    setContent(newContent);
+    setHasChanges(newContent !== originalContent);
+  };
 
-    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+  const handleSave = async () => {
+    if (!selectedItem || !hasChanges) return;
 
-    saveTimeoutRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:8000/api/${selectedFile}/content`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content: newNote }),
-          }
-        );
+    try {
+      setStatus("saving");
+      console.log("CONTENT:", content);
+      const res = await fetch(
+        `http://localhost:8000/api/filesystem/${selectedItem.id}/content`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ item_id: selectedItem.id, content: content }),
+        }
+      );
 
-        if (!res.ok) throw new Error("Failed to save note");
-
-        setStatus("Saved");
-      } catch (err) {
-        console.log("Error saving note:", err);
-        setStatus("Error");
+      if (!res.ok) {
+        throw new Error("Failed to save note");
       }
-    }, 1000);
+
+      setOriginalContent(content);
+      setStatus("saved");
+      setHasChanges(false);
+
+      setTimeout(() => {
+        if (status === "saved") {
+          setStatus("idle");
+        }
+      }, 2000);
+    } catch (err) {
+      console.error("Error saving note:", err);
+      setStatus("error");
+    }
+  };
+
+  const renderStatusIndicator = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center text-gray-400">
+          <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      );
+    }
+
+    switch (status) {
+      case "saving":
+        return (
+          <div className="flex items-center text-gray-400">
+            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+            <span>Saving...</span>
+          </div>
+        );
+      case "saved":
+        return (
+          <div className="flex items-center text-green-500">
+            <Check className="w-3 h-3 mr-2" />
+            <span>Saved</span>
+          </div>
+        );
+      case "error":
+        return (
+          <div className="flex items-center text-red-500">
+            <AlertCircle className="w-3 h-3 mr-2" />
+            <span>Error</span>
+          </div>
+        );
+      default:
+        if (selectedItem?.type === "file") {
+          return (
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={!hasChanges || status === "saving"}
+              className="flex items-center"
+            >
+              <Save className="w-3 h-3 mr-2" />
+              Save
+            </Button>
+          );
+        }
+        return null;
+    }
   };
 
   return (
-    <div className="ml-8 mr-40 mt-8 flex flex-col">
-      <label htmlFor="markdown-note" className="mb-2 font-semibold">
-        Notes ({note?.name || "No file selected"})
-      </label>
-      <textarea
-        id="markdown-note"
-        value={note}
-        onChange={handleNoteChange}
-        placeholder={
-          selectedFile
-            ? "Start typing your notes here..."
-            : "Select a file to begin typing..."
-        }
-        disabled={!selectedFile}
-        className={`w-5xl h-screen p-4 rounded-lg shadow-sm resize-none bg-black text-white ${
-          selectedFile ? "" : "cursor-not-allowed"
-        }`}
-      />
-      <span className="text-sm mt-2 text-gray-500">{status}</span>
+    <div className="h-full flex flex-col p-4">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-semibold text-lg">
+          {selectedItem ? selectedItem.name : "No file selected"}
+        </h2>
+        <div className="text-sm">{renderStatusIndicator()}</div>
+      </div>
+
+      {!selectedItem ? (
+        <div className="flex-1 flex items-center justify-center text-gray-400">
+          <p>Select a file to view or edit notes</p>
+        </div>
+      ) : selectedItem.type === "folder" ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
+          <Folder className="w-16 h-16 mb-4 text-blue-400 opacity-50" />
+          <p>This is a folder</p>
+          <p className="mt-2">Select a file to view or edit notes</p>
+        </div>
+      ) : loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col">
+          <textarea
+            value={content}
+            onChange={handleNoteChange}
+            placeholder="Start typing your notes here..."
+            className="flex-1 w-full p-4 rounded-lg bg-gray-800 text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          {hasChanges && (
+            <div className="mt-2 text-xs text-gray-400">
+              You have unsaved changes
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
