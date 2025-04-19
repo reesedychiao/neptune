@@ -8,17 +8,18 @@ const NotesDisplay = ({ selectedFile }) => {
   const saveTimeoutRef = useRef(null);
 
   useEffect(() => {
-    if (!selectedFile) {
+    if (!selectedFile.id) {
       setNote("");
       setStatus("No File Selected");
       return;
     }
+
     const fetchNote = async () => {
       try {
-        const res = await fetch("/api/notes/");
+        const res = await fetch(`http://localhost:8000/api/${selectedFile}`);
         if (!res.ok) throw new Error("Failed to fetch note");
         const data = await res.json();
-        setNote(data.note);
+        setNote(data.content || "");
         setStatus("Loaded");
       } catch (err) {
         console.log("Error loading note:", err);
@@ -38,11 +39,14 @@ const NotesDisplay = ({ selectedFile }) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/notes/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ note: newNote }),
-        });
+        const res = await fetch(
+          `http://localhost:8000/api/${selectedFile}/content`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content: newNote }),
+          }
+        );
 
         if (!res.ok) throw new Error("Failed to save note");
 
@@ -57,7 +61,7 @@ const NotesDisplay = ({ selectedFile }) => {
   return (
     <div className="ml-8 mr-40 mt-8 flex flex-col">
       <label htmlFor="markdown-note" className="mb-2 font-semibold">
-        Notes ({selectedFile || "No file selected"})
+        Notes ({note?.name || "No file selected"})
       </label>
       <textarea
         id="markdown-note"

@@ -15,11 +15,12 @@ const Home = () => {
   const [showGraph, setShowGraph] = useState(false);
   const [showNotes, setShowNotes] = useState(true);
   const [parent, setParent] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
 
   const handleAddFolder = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:8000/api/folders/", {
+      const res = await fetch("http://localhost:8000/api/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: folder, type: "folder", parent: parent }),
@@ -40,7 +41,7 @@ const Home = () => {
     e.preventDefault();
     setShowGraph(false);
     try {
-      const res = await fetch("http://localhost:8000/api/folders/", {
+      const res = await fetch("http://localhost:8000/api/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: file, type: "file", parent: parent }),
@@ -55,6 +56,20 @@ const Home = () => {
     setFile("");
     setShowFileForm(false);
     setParent("");
+  };
+
+  const handleFileClick = async (file: {
+    id: string;
+    parent_id: string;
+    content?: string;
+    type: string;
+    name: string;
+  }) => {
+    if (file.type === "folder") {
+      setParent(file.id);
+    } else {
+      setSelectedFile(file.id);
+    }
   };
 
   const handleDisplayGraph = (e: { preventDefault: () => void }) => {
@@ -102,9 +117,7 @@ const Home = () => {
             )}
           </div>
         </div>
-        <FileSystemDisplay
-          onClick={(e: React.SetStateAction<string>) => setParent(e)}
-        />
+        <FileSystemDisplay onClick={handleFileClick} />
         <Button
           onClick={handleDisplayGraph}
           className="absolute bottom-8 left-16 text-xl"
@@ -112,7 +125,7 @@ const Home = () => {
           🪐
         </Button>
       </div>
-      <div>{showNotes && <NotesDisplay selectedFile={folder || file} />}</div>
+      <div>{showNotes && <NotesDisplay selectedFile={selectedFile} />}</div>
       <div className="bg-white w-[600px] h-[600px] ml-8">
         {showGraph && <GraphDisplay />}
       </div>
