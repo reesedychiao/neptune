@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import re
 from keybert import KeyBERT
 
+
+
 class ContextManager:
     def __init__(self):
         self.current_time = datetime.now()
@@ -15,7 +17,7 @@ class ContextManager:
             setattr(self, key, value)
 
 class NoteGraphModel:
-    def __init__(self, nlp_model=None, domain_model=None, classes=None):
+    def __init__(self, nlp_model=None, domain_model="facebook/bart-large", classes=None):
         """
         Initializes the NoteGraphModel.
         
@@ -40,19 +42,17 @@ class NoteGraphModel:
         Args:
             classes (list): List of course names (e.g., ["Linear Algebra", "Operating Systems"])
         """
-        prompt = f"""Group the following course names into a dictionary where the keys are broad domains (e.g., "Math", "Computer Science") and values are lists of subdomains or specific course topics.
-        Also include a key called 'relate' that groups related domains or subdomains in a list of lists.
+        prompt = f"""Task: Given a list of courses, group them into appropriate domains and subdomains, and return the result as valid JSON. The JSON should follow this structure:
 
-        Return only valid JSON with this structure:
-        {{
-        "domain1": ["subdomain A", "subdomain B"],
-        "relate": [["subdomain A", "subdomain B"]]
-        }}
-
+{{
+    "Math": ["Linear Algebra", "Calculus"],
+    "Computer Science": ["Operating Systems", "Algorithms"]
+}}
         Courses: {', '.join(classes)}
         """
         result = self.dmodel(prompt, max_length=300)[0]['generated_text']
         
+        print("Model Output:\n", result)
         try:
             domains = json.loads(result)
             for domain, subdomains in domains.items():
@@ -63,10 +63,10 @@ class NoteGraphModel:
                     self.graph.add_node(sub, type="subdomain")
                     self.graph.add_edge(domain, sub, relation="has_subdomain")
 
-            for group in domains.get("related", []):
+            for group in domains.get("relate", []):
                 for i in range(len(group)):
                     for j in range(i + 1, len(group)):
-                        self.graph.add_edge(group[i], group[j], relation="related")
+                        self.graph.add_edge(group[i], group[j], relation="relate")
         except json.JSONDecodeError:
             print("Failed to parse domain model output:", result)
 
