@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Folder, FileText } from "lucide-react";
 
+
 const buildTree = (items) => {
   if (!Array.isArray(items)) {
     console.warn("Expected items to be an array, but got:", items);
@@ -28,6 +29,30 @@ const buildTree = (items) => {
     }
   });
 
+  // Sort root items to put folders first, then files
+  root.sort((a, b) => {
+    if (a.type === b.type) {
+      return a.name.localeCompare(b.name); 
+    }
+    return a.type === "folder" ? -1 : 1; 
+  });
+
+  const sortChildren = (items) => {
+    items.forEach(item => {
+      if (item.children && item.children.length > 0) {
+        item.children.sort((a, b) => {
+          if (a.type === b.type) {
+            return a.name.localeCompare(b.name);
+          }
+          return a.type === "folder" ? -1 : 1;
+        });
+        sortChildren(item.children);
+      }
+    });
+  };
+
+  sortChildren(root);
+  
   return root;
 };
 
@@ -120,25 +145,25 @@ const FileSystemDisplay = ({ onClick, selectedItem }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Simulate API fetch with mock data
     const fetchFileSystem = async () => {
       try {
         setLoading(true);
         setError(null);
+      
         const res = await fetch("http://localhost:8000/api/filesystem");
-
         if (!res.ok) {
           throw new Error(`Failed to fetch file system: ${res.status}`);
         }
-
         const data = await res.json();
         const tree = buildTree(data);
         setFileSystem(tree);
+        setLoading(false);
       } catch (err) {
         console.error("Error fetching file system:", err);
         setError(
           err instanceof Error ? err.message : "Failed to load file system"
         );
-      } finally {
         setLoading(false);
       }
     };
@@ -180,7 +205,7 @@ const FileSystemDisplay = ({ onClick, selectedItem }) => {
   }
 
   return (
-    <div className="p-2">
+    <div className="p-4">
       <ul className="list-none space-y-1">
         {fileSystem.map((item, index) => (
           <FileTreeItem

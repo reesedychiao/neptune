@@ -935,7 +935,7 @@ function NetworkGraph() {
   return (
     <div
       ref={containerRef}
-      className="w-5xl h-screen bg-[#050a1c] rounded-lg shadow-lg overflow-hidden border border-[#1a2552]"
+      className="w-full h-full bg-[#050a1c] rounded-lg shadow-lg overflow-hidden border border-[#1a2552]"
     >
       {/* Add this refresh button */}
       <div className="absolute top-4 right-4 z-10">
@@ -954,7 +954,7 @@ function NetworkGraph() {
         className="w-full h-full"
         style={{ 
           overflow: "hidden",
-          position: "relative" // Add this line
+          position: "relative" 
         }}
       >
         <ReactFlow
@@ -1026,7 +1026,7 @@ function NetworkGraph() {
 export default function NetworkGraphWrapper() {
   return (
     <ReactFlowProvider>
-      <div className="bg-black">
+      <div className="w-full h-full bg-black">
         <NetworkGraph />
       </div>
     </ReactFlowProvider>
