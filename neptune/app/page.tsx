@@ -1,28 +1,11 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
-import FileSystemDisplay from "@/components/FileSystemDisplay";
-import NotesDisplay from "@/components/NotesDisplay";
-import GraphDisplay from "@/components/GraphDisplay";
+import React, { useState } from "react";
+import FileSystemDisplay from "../components/FileSystemDisplay";
+import NotesDisplay from "../components/NotesDisplay";
+import GraphDisplay from "../components/GraphDisplay";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Folder, File, EarthIcon as PlanetIcon } from "lucide-react";
-
-export interface FileSystemItem {
-  id: number;
-  name: string;
-  type: string;
-  parent_id: string | null;
-  content?: string;
-  children?: FileSystemItem[];
-}
-
-export interface SelectedItem {
-  id: number;
-  type: string;
-  name?: string;
-}
+import { Input } from "../components/ui/input";
 
 const Home = () => {
   const [showFolderForm, setShowFolderForm] = useState(false);
@@ -31,211 +14,120 @@ const Home = () => {
   const [file, setFile] = useState("");
   const [showGraph, setShowGraph] = useState(false);
   const [showNotes, setShowNotes] = useState(true);
-  const [parent, setParent] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [parent, setParent] = useState("");
+  const [selectedFile, setSelectedFile] = useState("");
 
-  // Update selectedItem to include name
-  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
-
-  const generateRandomId = () => Math.floor(Math.random() * 1000000);
-
-  const refreshFileSystem = () => {
-    setRefreshKey((prev) => prev + 1);
-  };
-
-  const handleAddFolder = async (e: React.FormEvent) => {
+  const handleAddFolder = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    if (!folder.trim()) return;
-
-    const id = generateRandomId();
     try {
-      const res = await fetch("http://localhost:8000/api/filesystem", {
+      const res = await fetch("http://localhost:8000/api/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          id: id,
-          name: folder,
-          type: "folder",
-          parent: parent,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: folder, type: "folder", parent: parent }),
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to create folder: ${res.status} ${errorText}`);
-      }
+      if (!res.ok) throw new Error("Failed to create folder");
 
-      refreshFileSystem();
+      console.log("Folder added:", folder);
     } catch (err) {
-      console.error("Request error:", err);
+      console.error(err);
     }
     setFolder("");
     setShowFolderForm(false);
+    setParent("");
   };
 
-  const handleAddFile = async (e: React.FormEvent) => {
+  const handleAddFile = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-    if (!file.trim()) return;
-
-    const id = generateRandomId();
+    setShowGraph(false);
     try {
-      const res = await fetch("http://localhost:8000/api/filesystem", {
+      const res = await fetch("http://localhost:8000/api/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          id: id,
-          name: file,
-          type: "file",
-          parent: parent,
-        }),
+        body: JSON.stringify({ name: file, type: "file", parent: parent }),
       });
 
       if (!res.ok) throw new Error("Failed to create file");
 
-      refreshFileSystem();
+      console.log("File added:", file);
     } catch (err) {
-      console.error("Error creating file:", err);
+      console.log(err);
     }
     setFile("");
     setShowFileForm(false);
+    setParent("");
   };
 
-  // Update handleItemClick to include the item name
-  const handleItemClick = (item: FileSystemItem) => {
-    setSelectedItem({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-    });
-
-    if (item.type === "folder") {
-      setParent(item.id);
+  const handleFileClick = async (file: {
+    id: string;
+    parent_id: string;
+    content?: string;
+    type: string;
+    name: string;
+  }) => {
+    if (file.type === "folder") {
+      setParent(file.id);
+    } else {
+      setSelectedFile(file.id);
     }
   };
 
-  const handleDisplayGraph = () => {
+  const handleDisplayGraph = (e: { preventDefault: () => void }) => {
+    e.preventDefault();
     setShowGraph(!showGraph);
     setShowNotes(!showNotes);
+    setParent("");
   };
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-100">
-      <div className="w-70 border-r border-gray-700 flex flex-col">
-        <div className="p-4 border-b border-gray-700">
-          <div className="flex space-x-2 mb-4">
+    <div className="flex">
+      <div>
+        <div>
+          <div className="ml-40 mt-8 flex">
             <Button
               onClick={() => setShowFolderForm(true)}
-              variant="outline"
-              size="sm"
-              className="flex-1 text-black"
+              className="mr-4 text-xl"
             >
-              <Folder className="w-4 h-4 mr-2" />
-              New Folder
+              📁
             </Button>
-            <Button
-              onClick={() => setShowFileForm(true)}
-              variant="outline"
-              size="sm"
-              className="flex-1 text-black"
-            >
-              <File className="w-4 h-4 mr-2" />
-              New File
+            <Button onClick={() => setShowFileForm(true)} className="text-xl">
+              📄
             </Button>
           </div>
-
-          {showFolderForm && (
-            <form onSubmit={handleAddFolder} className="mb-2">
-              <Input
-                placeholder="Folder name"
-                value={folder}
-                onChange={(e) => setFolder(e.target.value)}
-                className="mb-1"
-                autoFocus
-              />
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFolderForm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm">
-                  Create
-                </Button>
-              </div>
-            </form>
-          )}
-
-          {showFileForm && (
-            <form onSubmit={handleAddFile} className="mb-2">
-              <Input
-                placeholder="File name"
-                value={file}
-                onChange={(e) => setFile(e.target.value)}
-                className="mb-1"
-                autoFocus
-              />
-              <div className="flex justify-end space-x-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowFileForm(false)}
-                >
-                  Cancel
-                </Button>
-                <Button type="submit" size="sm">
-                  Create
-                </Button>
-              </div>
-            </form>
-          )}
-
-          <h2
-            className="font-semibold text-lg cursor-pointer hover:text-gray-300"
-            onClick={() => {
-              setParent(0);
-              setSelectedItem(null);
-            }}
-          >
-            File System
-          </h2>
+          <div className="ml-8 my-4">
+            {showFolderForm && (
+              <form onSubmit={handleAddFolder}>
+                <Input
+                  placeholder="Enter folder name"
+                  value={folder}
+                  onChange={(e) => setFolder(e.target.value)}
+                  className="w-48 text-white"
+                ></Input>
+              </form>
+            )}
+            {showFileForm && (
+              <form onSubmit={handleAddFile}>
+                <Input
+                  placeholder="Enter file name"
+                  value={file}
+                  onChange={(e) => setFile(e.target.value)}
+                  className="w-48 text-white"
+                ></Input>
+              </form>
+            )}
+          </div>
         </div>
-
-        <div className="flex-1 overflow-auto">
-          <FileSystemDisplay
-            key={refreshKey}
-            onClick={handleItemClick}
-            selectedItem={selectedItem}
-          />
-        </div>
-
+        <FileSystemDisplay onClick={handleFileClick} />
         <Button
           onClick={handleDisplayGraph}
-          variant="ghost"
-          className="m-4 flex items-center justify-center"
+          className="absolute bottom-8 left-16 text-xl"
         >
-          <PlanetIcon className="w-5 h-5 mr-2" />
-          {showGraph ? "Show Notes" : "Show Graph"}
+          🪐
         </Button>
       </div>
-
-      <div className="flex-1 flex">
-        {showNotes && (
-          <div className="flex-1">
-            <NotesDisplay selectedItem={selectedItem} />
-          </div>
-        )}
-
-        {showGraph && (
-          <div className="flex-1 bg-white">
-            <GraphDisplay />
-          </div>
-        )}
+      <div>{showNotes && <NotesDisplay selectedFile={selectedFile} />}</div>
+      <div className="bg-white w-[600px] h-[600px] ml-8">
+        {showGraph && <GraphDisplay />}
       </div>
     </div>
   );
