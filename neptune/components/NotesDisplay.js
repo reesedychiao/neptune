@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Loader2, Folder, Save, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SelectedItem } from "@/app/page";
+import ReactMarkdown from "react-markdown";
 
 const NotesDisplay = ({ selectedItem }) => {
   const [note, setNote] = useState(null);
@@ -13,6 +14,7 @@ const NotesDisplay = ({ selectedItem }) => {
   const [status, setStatus] = useState("idle");
   const [loading, setLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     if (!selectedItem) {
@@ -74,13 +76,13 @@ const NotesDisplay = ({ selectedItem }) => {
 
     try {
       setStatus("saving");
-      console.log("CONTENT:", content);
+      console.log("CONTENT:", content, selectedItem.id);
       const res = await fetch(
         `http://localhost:8000/api/filesystem/${selectedItem.id}/content`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ item_id: selectedItem.id, content: content }),
+          body: JSON.stringify({ content }),
         }
       );
 
@@ -178,12 +180,30 @@ const NotesDisplay = ({ selectedItem }) => {
         </div>
       ) : (
         <div className="flex-1 flex flex-col">
-          <textarea
-            value={content}
-            onChange={handleNoteChange}
-            placeholder="Start typing your notes here..."
-            className="flex-1 w-full p-4 rounded-lg bg-gray-800 text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          {isEditing ? (
+            <textarea
+              value={content}
+              onChange={handleNoteChange}
+              placeholder="Start typing your notes here..."
+              className="flex-1 w-full p-4 rounded-lg bg-gray-800 text-gray-100 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          ) : (
+            <div
+              className="flex-1 w-full p-4 rounded-lg bg-gray-800 text-gray-100 overflow-auto"
+              onClick={() => setIsEditing(true)}
+            >
+              <ReactMarkdown>
+                {content || "_Nothing here yet..._"}
+              </ReactMarkdown>
+            </div>
+          )}
+
+          <button
+            onClick={() => setIsEditing(!isEditing)}
+            className="mt-2 self-end px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition"
+          >
+            {isEditing ? "Preview" : "Edit"}
+          </button>
           {hasChanges && (
             <div className="mt-2 text-xs text-gray-400">
               You have unsaved changes

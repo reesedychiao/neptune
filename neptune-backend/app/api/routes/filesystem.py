@@ -3,8 +3,12 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.db.models import FileSystem
 from app.schemas.file_system import FileSystemItem, FileSystemCreate, FileSystemUpdate, FileSystemListResponse
+from pydantic import BaseModel
+from datetime import datetime
 
 router = APIRouter()
+class ContentUpdate(BaseModel):
+    content: str
 
 @router.get("/", response_model=list[FileSystemItem])
 async def get_file_system(parent_id: int = None, db: Session = Depends(get_db)):
@@ -67,8 +71,9 @@ async def create_file_system_item(item: FileSystemCreate, db: Session = Depends(
     )
 
 @router.put("/{item_id}/content", response_model=FileSystemItem)
-async def update_file_content(item_id: int, content: str, db: Session = Depends(get_db)):
+async def update_file_content(item_id: int, data: ContentUpdate, db: Session = Depends(get_db)):
     """Update file content"""
+    content = data.content
     db_item = db.query(FileSystem).filter(FileSystem.id == item_id).first()
     if not db_item:
         raise HTTPException(status_code=404, detail="File not found")

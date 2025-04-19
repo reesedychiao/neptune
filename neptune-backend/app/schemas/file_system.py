@@ -8,6 +8,8 @@ class FileSystemItem(BaseModel):
     type: str  # Type can be 'file' or 'folder'
     parent_id: Optional[int] = None  # ID of the parent folder, if applicable
     content: Optional[str] = None  # Only for files, not folders
+    class Config:
+        from_attributes = True
 
 class FileSystemCreate(BaseModel):
     name: str
