@@ -38,7 +38,7 @@ const NotesDisplay = ({ selectedFile }) => {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch("/api/notes/", {
+        const res = await fetch("http://localhost:8000/api/notes/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ note: newNote }),
