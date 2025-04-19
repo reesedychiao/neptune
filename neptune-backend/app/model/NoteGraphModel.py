@@ -15,7 +15,7 @@ class ContextManager:
             setattr(self, key, value)
 
 class NoteGraphModel:
-    def __init__(self, nlp_model, domain_model, classes=None):
+    def __init__(self, nlp_model=None, domain_model=None, classes=None):
         """
         Initializes the NoteGraphModel.
         
@@ -132,25 +132,25 @@ class NoteGraphModel:
         for _, heading in heading_matches:
             topics.append({"value": heading.strip(), "note_id": note_id})
 
-        # Extract bold-italic (***text*** or ___text___)
-        bold_italic_matches = re.findall(r'\*\*\*(.+?)\*\*\*|___(.+?)___', text)
+        # 1. Bold-Italic (***text*** or ___text___)
+        bold_italic_matches = re.findall(r'(\*\*\*.+?\*\*\*|___.+?___)', text)
         for match in bold_italic_matches:
-            for word in match:
-                if word:
-                    keywords.append({"value": word.strip(), "note_id": note_id})
+            content = re.sub(r'^\*\*\*|___|___|\*\*\*$', '', match).strip()
+            if content:
+                keywords.append({"value": content, "note_id": note_id})
+            # Replace with placeholder to avoid re-matching
+            text = text.replace(match, '')
 
-        # Extract bold (**text** or __text__)
-        bold_matches = re.findall(r'\*\*(.+?)\*\*|__(.+?)__', text)
+        # 2. Bold (**text** or __text__)
+        bold_matches = re.findall(r'(\*\*.+?\*\*|__.+?__)', text)
         for match in bold_matches:
-            for word in match:
-                if word:
-                    keywords.append({"value": word.strip(), "note_id": note_id})
+            content = re.sub(r'^\*\*|__|__|\*\*$', '', match).strip()
+            if content:
+                keywords.append({"value": content, "note_id": note_id})
+            text = text.replace(match, '')
 
-        # Extract italic (*text* or _text_)
-        italic_matches = re.findall(
-            r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)',
-            text
-        )
+        # 3. Italic (*text* or _text_)
+        italic_matches = re.findall(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)', text)
         for match in italic_matches:
             for word in match:
                 if word:
