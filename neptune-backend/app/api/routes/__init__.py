@@ -10,3 +10,4 @@ from .knowledge_graph import router as knowledge_graph_router
 
 router.include_router(filesystem_router, prefix="/filesystem", tags=["filesystem"])
 router.include_router(folders_router, prefix="/folders", tags=["folders"])
+router.include_router(knowledge_graph_router, prefix="/knowledge_graph", tags=["knowledge_graph"])

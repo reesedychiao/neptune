@@ -12,10 +12,7 @@ async def get_knowledge_graph(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """
-    Get the knowledge graph data for visualization.
-    This endpoint returns cached data if available and triggers a refresh in the background.
-    """
+    """Get the knowledge graph data for visualization"""
     # Get current cached data
     graph_data = get_cached_graph_data()
     
@@ -26,7 +23,5 @@ async def get_knowledge_graph(
 
 @router.post("/refresh", response_model=Dict)
 async def refresh_knowledge_graph(db: Session = Depends(get_db)):
-    """
-    Force refresh the knowledge graph and wait for the results
-    """
+    """Force refresh the knowledge graph and wait for the results"""
     return await generate_knowledge_graph(db)

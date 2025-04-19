@@ -5,7 +5,7 @@ from fastapi import BackgroundTasks, APIRouter, Depends
 from datetime import datetime
 
 from app.services.llm_service import extract_topics_from_notes
-from app.services.visualize_topics import create_topic_graph, graph_to_frontend_format, visualize_graph_matplotlib, visualize_graph_plotly
+from app.services.visualize_topics import create_topic_graph, graph_to_frontend_format
 from app.db.models import FileSystem  # Import your file system model
 from app.db.database import get_db
 
@@ -46,11 +46,6 @@ async def generate_knowledge_graph(db: Session) -> Dict:
         if topics_data:
             graph = create_topic_graph(topics_data)
             graph_data = graph_to_frontend_format(graph)
-            
-            # Save visualization images
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            visualize_graph_matplotlib(graph, filename=f"knowledge_graph_{timestamp}.png")
-            visualize_graph_plotly(graph, filename=f"knowledge_graph_{timestamp}.html")
             
             # Update cache
             latest_graph_data = graph_data
