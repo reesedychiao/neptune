@@ -14,8 +14,7 @@ from datetime import datetime
 from app.services.note_content import store_note_content, load_note_content
 from app.services.revisions import create_revision
 from app.services.search import index_note
-from app.services.embeddings import upsert_embedding, delete_embedding
-from app.services.knowledge_graph import invalidate_cache
+from app.services.indexer_client import notify_note_upsert, notify_note_delete
 import logging
 
 logger = logging.getLogger(__name__)
@@ -59,15 +58,7 @@ async def get_file_system(
         db.commit()
         db.refresh(default_note)
         index_note(db, default_note, default_note.content)
-        try:
-            upsert_embedding(db, default_note, default_note.content or "")
-            db.commit()
-        except Exception as e:
-            logger.warning("Embedding upsert failed: %s", e)
-        try:
-            invalidate_cache()
-        except Exception:
-            pass
+        notify_note_upsert(default_note.id)
         return [FileSystemMeta(
             id=default_note.id,
             owner_id=default_note.owner_id,
@@ -117,15 +108,7 @@ async def create_file_system_item(item: FileSystemCreate, db: Session = Depends(
     db.commit()
     db.refresh(db_item)
     index_note(db, db_item, db_item.content)
-    try:
-        upsert_embedding(db, db_item, db_item.content or "")
-        db.commit()
-    except Exception as e:
-        logger.warning("Embedding upsert failed: %s", e)
-    try:
-        invalidate_cache()
-    except Exception:
-        pass
+    notify_note_upsert(db_item.id)
     
     return FileSystemItem(
         id=db_item.id,
@@ -185,15 +168,7 @@ async def update_file_content(
     db.commit()
     db.refresh(db_item)
     index_note(db, db_item, content)
-    try:
-        upsert_embedding(db, db_item, content)
-        db.commit()
-    except Exception as e:
-        logger.warning("Embedding upsert failed: %s", e)
-    try:
-        invalidate_cache()
-    except Exception:
-        pass
+    notify_note_upsert(db_item.id)
     
     return FileSystemItem(
         id=db_item.id,
@@ -286,15 +261,7 @@ async def delete_file_system_item(
 
     db_item.deleted_at = datetime.utcnow()
     db.commit()
-    try:
-        delete_embedding(db, db_item.id)
-        db.commit()
-    except Exception as e:
-        logger.warning("Embedding delete failed: %s", e)
-    try:
-        invalidate_cache()
-    except Exception:
-        pass
+    notify_note_delete(db_item.id)
     
     return {"success": True, "message": f"File '{db_item.name}' deleted successfully"}
 
@@ -312,14 +279,5 @@ async def restore_file_system_item(
         return {"success": True, "message": f"File '{db_item.name}' is already active"}
     db_item.deleted_at = None
     db.commit()
-    try:
-        if db_item.content:
-            upsert_embedding(db, db_item, db_item.content)
-            db.commit()
-    except Exception as e:
-        logger.warning("Embedding restore upsert failed: %s", e)
-    try:
-        invalidate_cache()
-    except Exception:
-        pass
+    notify_note_upsert(db_item.id)
     return {"success": True, "message": f"File '{db_item.name}' restored successfully"}

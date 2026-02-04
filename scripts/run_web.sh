@@ -11,6 +11,9 @@ cleanup() {
   if [[ -n "${BACKEND_PID:-}" ]]; then
     kill "$BACKEND_PID" >/dev/null 2>&1 || true
   fi
+  if [[ -n "${INDEXER_PID:-}" ]]; then
+    kill "$INDEXER_PID" >/dev/null 2>&1 || true
+  fi
   if [[ -n "${FRONTEND_PID:-}" ]]; then
     kill "$FRONTEND_PID" >/dev/null 2>&1 || true
   fi
@@ -31,9 +34,14 @@ export DB_BACKEND=sqlite
 export HOST=127.0.0.1
 export PORT=8000
 export CORS_ALLOW_ALL=true
+export INDEXER_URL=http://127.0.0.1:8001
 
 python -m uvicorn app.main:app --reload >/tmp/neptune_backend.log 2>&1 &
 BACKEND_PID=$!
+
+echo "Starting Neptune indexer..."
+python -m uvicorn app.indexer_app:app --port 8001 --reload >/tmp/neptune_indexer.log 2>&1 &
+INDEXER_PID=$!
 
 echo "Starting Neptune frontend..."
 cd "$FRONTEND_DIR"
@@ -47,10 +55,12 @@ FRONTEND_PID=$!
 echo ""
 echo "Neptune is running:"
 echo "  Backend:  http://localhost:8000"
+echo "  Indexer:  http://localhost:8001"
 echo "  Frontend: http://localhost:3000"
 echo ""
 echo "Logs:"
 echo "  Backend:  /tmp/neptune_backend.log"
+echo "  Indexer:  /tmp/neptune_indexer.log"
 echo "  Frontend: /tmp/neptune_frontend.log"
 echo ""
 echo "Press Ctrl+C to stop."
