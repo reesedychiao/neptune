@@ -10,6 +10,7 @@ spec:
       containers:
         - name: migrate
           image: neptune-backend:latest
+          imagePullPolicy: IfNotPresent
           command: ["alembic", "upgrade", "head"]
           envFrom:
             - secretRef:
