@@ -14,6 +14,19 @@ has_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
+run_docker() {
+  if docker "$@" ; then
+    return 0
+  fi
+
+  if has_cmd sudo; then
+    sudo docker "$@"
+    return 0
+  fi
+
+  return 1
+}
+
 build_args=()
 if [[ -n "$DOCKERFILE" ]]; then
   build_args=(-f "$DOCKERFILE")
@@ -43,10 +56,10 @@ import_to_k3s() {
 build_with_docker() {
   local archive
 
-  docker build "${build_args[@]}" -t "$IMAGE_NAME" "$CONTEXT_DIR"
+  run_docker build "${build_args[@]}" -t "$IMAGE_NAME" "$CONTEXT_DIR"
   archive="$(mktemp "/tmp/${IMAGE_NAME//[\/:]/_}.XXXXXX.tar")"
   trap 'rm -f "$archive"' RETURN
-  docker save -o "$archive" "$IMAGE_NAME"
+  run_docker save -o "$archive" "$IMAGE_NAME"
   import_to_k3s "$archive"
 }
 
