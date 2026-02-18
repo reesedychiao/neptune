@@ -6,5 +6,4 @@ BACKEND_DIR="$ROOT_DIR/neptune-backend"
 
 IMAGE_NAME="neptune-indexer:latest"
 
-docker build -t "$IMAGE_NAME" "$BACKEND_DIR"
-echo "Built $IMAGE_NAME"
+"$ROOT_DIR/scripts/build_image.sh" "$IMAGE_NAME" "$BACKEND_DIR"
