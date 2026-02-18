@@ -14,17 +14,26 @@ has_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-run_docker() {
-  if docker "$@" ; then
+DOCKER_CMD=()
+
+init_docker_cmd() {
+  if docker info >/dev/null 2>&1; then
+    DOCKER_CMD=(docker)
     return 0
   fi
 
-  if has_cmd sudo; then
-    sudo docker "$@"
+  if has_cmd sudo && sudo docker info >/dev/null 2>&1; then
+    DOCKER_CMD=(sudo docker)
     return 0
   fi
 
+  echo "Docker daemon is not accessible for this user." >&2
+  echo "Either add your user to the docker group and re-login, or run this script with sudo." >&2
   return 1
+}
+
+run_docker() {
+  "${DOCKER_CMD[@]}" "$@"
 }
 
 build_args=()
@@ -56,6 +65,7 @@ import_to_k3s() {
 build_with_docker() {
   local archive
 
+  init_docker_cmd
   run_docker build "${build_args[@]}" -t "$IMAGE_NAME" "$CONTEXT_DIR"
   archive="$(mktemp "/tmp/${IMAGE_NAME//[\/:]/_}.XXXXXX.tar")"
   trap 'rm -f "$archive"' RETURN
