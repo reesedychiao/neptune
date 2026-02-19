@@ -46,6 +46,7 @@ spec:
       containers:
         - name: backend
           image: neptune-backend:latest
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
           envFrom:
